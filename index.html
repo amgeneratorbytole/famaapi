@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --bg: #0a0a0a;
+  --fg: #fafafa;
+  --fg-muted: #a1a1aa;
+  --fg-dim: #52525b;
+  --border: rgba(255,255,255,0.09);
+  --border-bright: rgba(255,255,255,0.18);
+  --surface: #141414;
+  --surface2: #1c1c1c;
+  --primary: #fafafa;
+  --primary-fg: #0a0a0a;
+  --mono: 'Geist Mono', monospace;
+  --sans: 'Geist', -apple-system, sans-serif;
+  --radius: 0.75rem;
+  --accent: #7c6fff;
+  --green: #22c55e;
+  --orange: #fb923c;
+  --blue: #60a5fa;
+  --red: #f87171;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ===== DITHER BACKGROUND ===== */
+.dither-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.dither-bg canvas {
+  width: 100%; height: 100%;
+  opacity: 0.55;
+}
+
+/* ===== HEADER ===== */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10,10,10,0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+}
+.nav-logo-mark {
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--fg);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800;
+  letter-spacing: -0.05em;
+}
+.nav-actions { display: flex; align-items: center; gap: 10px; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+.btn-primary:hover { background: #e4e4e7; }
+.btn-ghost {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: var(--border-bright); }
+.btn-outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border-bright);
+}
+.btn-outline:hover { background: rgba(255,255,255,0.06); }
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+.btn-icon {
+  width: 36px; height: 36px; padding: 0;
+  justify-content: center;
+  border-radius: var(--radius);
+}
+
+/* ===== MAIN LAYOUT ===== */
+main { position: relative; z-index: 1; }
+
+/* ===== HERO SECTION ===== */
+.hero-section {
+  min-height: 100vh;
+  padding-top: 56px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (max-width: 900px) {
+  .hero-section { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 24px 60px 48px;
+  max-width: 600px;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  .hero-content { padding: 48px 24px 32px; max-width: 100%; }
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.hero-title {
+  font-size: clamp(52px, 7vw, 88px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  margin-bottom: 24px;
+}
+
+.hero-desc {
+  font-size: 16px;
+  color: var(--fg-muted);
+  max-width: 420px;
+  line-height: 1.65;
+  margin-bottom: 36px;
+  background: rgba(10,10,10,0.5);
+  border-radius: 6px;
+  padding: 4px 0;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ===== LANYARD PANEL ===== */
+.hero-lanyard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  background: radial-gradient(ellipse at center, rgba(124,111,255,0.04) 0%, transparent 70%);
+}
+
+@media (max-width: 900px) {
+  .hero-lanyard { min-height: 420px; }
+}
+
+/* The "card" that replaces the 3D lanyard */
+.api-card-preview {
+  width: 220px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 24px 20px;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  transform: perspective(800px) rotateY(-8deg) rotateX(4deg);
+  transition: transform 0.4s ease;
+}
+.api-card-preview:hover {
+  transform: perspective(800px) rotateY(-3deg) rotateX(2deg);
+}
+
+/* Lanyard rope */
+.lanyard-rope {
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), rgba(255,255,255,0.35));
+  margin: 0 auto 0;
+  position: relative;
+}
+.lanyard-rope::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 30px; height: 2px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+}
+
+.card-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+.card-brand-mark {
+  width: 28px; height: 28px;
+  background: white;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: black; font-size: 12px; font-weight: 800;
+  font-family: var(--mono);
+}
+.card-brand-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  line-height: 1.2;
+}
+.card-brand-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+}
+
+/* Dithered dot pattern on card */
+.card-pattern {
+  height: 80px;
+  margin: 0 -20px;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.25) 1px, transparent 1px);
+  background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.3));
+  mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.3));
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.card-user-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  min-height: 18px;
+}
+
+.card-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.4);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Controls under the card */
+.card-controls {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: auto;
+}
+
+@media (max-width: 900px) {
+  .card-controls {
+    position: static;
+    margin: 0 24px 32px;
+  }
+}
+
+.controls-inner {
+  width: 320px;
+}
+
+@media (max-width: 900px) {
+  .controls-inner { width: 100%; max-width: 360px; }
+}
+
+.controls-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.variant-swatches {
+  display: flex;
+  gap: 8px;
+}
+.swatch {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.swatch.dark { background: #111; border-color: rgba(255,255,255,0.3); }
+.swatch.light { background: #fff; border-color: rgba(255,255,255,0.15); }
+.swatch.active { box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
+
+.controls-row {
+  display: flex;
+  gap: 8px;
+}
+.name-input {
+  flex: 1;
+  height: 38px;
+  background: rgba(10,10,10,0.8);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 0 40px 0 12px;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.name-input:focus {
+  border-color: var(--fg-muted);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.06);
+}
+.name-input::placeholder { color: var(--fg-dim); }
+.name-counter {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--fg-dim);
+  pointer-events: none;
+}
+.name-wrap { position: relative; flex: 1; }
+
+/* ===== SUPPORTERS ===== */
+.supporters-section {
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+  position: relative; z-index: 1;
+}
+.supporters-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.supporters-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  border-right: 1px solid var(--border);
+  padding-right: 32px;
+}
+.supporters-logos {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+.supporter-logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .supporters-inner { padding: 0 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
+  .supporters-label { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+}
+
+/* ===== SECTION COMMON ===== */
+.section-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 80px 48px;
+  position: relative; z-index: 1;
+}
+
+@media (max-width: 640px) {
+  .section-wrap { padding: 60px 24px; }
+}
+
+.section-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+/* ===== FEATURES (API CAPABILITIES) ===== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .features-grid { grid-template-columns: 1fr; }
+}
+
+.feature-cell {
+  padding: 40px 28px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+  transition: background 0.2s;
+}
+.feature-cell:last-child { border-right: none; }
+.feature-cell:hover { background: rgba(255,255,255,0.02); }
+
+@media (max-width: 768px) {
+  .feature-cell { border-right: none; border-bottom: 1px solid var(--border); }
+  .feature-cell:last-child { border-bottom: none; }
+}
+
+.feature-icon-wrap {
+  width: 144px; height: 144px;
+  margin: 0 auto 24px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+/* Grid pattern mask */
+.feature-icon-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 40%, black 70%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 40%, black 70%);
+}
+.feature-icon-box {
+  width: 48px; height: 48px;
+  background: var(--bg);
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  position: relative;
+  z-index: 1;
+}
+.feature-name {
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+.feature-desc {
+  font-size: 13.5px;
+  color: var(--fg-muted);
+  line-height: 1.6;
+}
+
+/* ===== API LIST (AGENDA-STYLE) ===== */
+.api-list-section { border-top: 1px solid var(--border); }
+
+.api-list-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .api-list-grid { grid-template-columns: 1fr; }
+}
+
+.api-list-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+
+.api-items {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px dashed rgba(255,255,255,0.12);
+}
+
+.api-item {
+  padding: 24px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.12);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.api-item:hover .api-item-name { color: white; }
+
+.api-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.api-item-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+  transition: color 0.15s;
+}
+.api-item-desc {
+  color: var(--fg-muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.api-item-path {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-dim);
+}
+
+/* ===== TRY PANEL ===== */
+.try-panel {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: none;
+  animation: try-in 0.2s ease;
+}
+@keyframes try-in { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: none; } }
+.try-panel.open { display: block; }
+
+.try-fields { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.try-input {
+  flex: 1; min-width: 140px;
+  height: 36px;
+  background: var(--bg);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 0 12px;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.try-input:focus { border-color: var(--fg-muted); }
+.try-input::placeholder { color: var(--fg-dim); }
+
+.try-result {
+  background: #050505;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #86efac;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+  line-height: 1.6;
+}
+.try-result.show { display: block; }
+
+/* ===== BADGE ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge-green { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+.badge-orange { background: rgba(251,146,60,0.12); color: #fb923c; border: 1px solid rgba(251,146,60,0.2); }
+.badge-blue { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+.badge-white { background: rgba(255,255,255,0.08); color: var(--fg); border: 1px solid var(--border); }
+
+/* ===== CTA SECTION ===== */
+.cta-section { position: relative; z-index: 1; padding: 0 16px 80px; }
+.cta-box {
+  max-width: 1068px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 80px 48px;
+  text-align: center;
+  background: rgba(255,255,255,0.01);
+}
+@media (max-width: 640px) {
+  .cta-box { padding: 48px 24px; border-radius: 16px; }
+}
+.cta-title {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin-bottom: 16px;
+}
+.cta-desc {
+  color: var(--fg-muted);
+  font-size: 15px;
+  margin-bottom: 40px;
+}
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 24px;
+  position: relative; z-index: 1;
+}
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+.footer-logo {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 28px;
+  display: block;
+}
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.footer-links a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: var(--fg); }
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+
+/* ===== API KEY DRAWER ===== */
+.key-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.key-overlay.open { opacity: 1; pointer-events: auto; }
+
+.key-drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 340px;
+  background: rgba(14,14,14,0.98);
+  border-left: 1px solid var(--border);
+  z-index: 400;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+.key-drawer.open { transform: translateX(0); }
+
+@media (max-width: 400px) {
+  .key-drawer { width: 100%; }
+}
+
+.drawer-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.drawer-sub {
+  font-size: 13px;
+  color: var(--fg-muted);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+.key-field {
+  width: 100%;
+  height: 42px;
+  background: var(--bg);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 0 14px;
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color 0.18s;
+}
+.key-field:focus { border-color: var(--fg-muted); }
+.key-btns { display: flex; gap: 8px; margin-bottom: 20px; }
+.key-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.key-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.key-dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.key-dot.off { background: var(--fg-dim); }
+.drawer-close-btn {
+  position: absolute;
+  top: 20px; right: 20px;
+  width: 32px; height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: 16px;
+  transition: color 0.15s, background 0.15s;
+}
+.drawer-close-btn:hover { color: var(--fg); background: var(--surface2); }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--surface2);
+  border: 1px solid var(--border-bright);
+  color: var(--fg);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 999;
+  backdrop-filter: blur(12px);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== DECRYPT ANIMATION ===== */
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Dither background -->
+<div class="dither-bg"><canvas id="ditherCanvas"></canvas></div>
+
+<!-- HEADER -->
+<header>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">F</div>
+      <span>famaApi</span>
+    </a>
+    <div class="nav-actions">
+      <button class="btn btn-primary btn-sm" onclick="openKeyDrawer()">API Key</button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<main>
+<section class="hero-section">
+  <div class="hero-content">
+    <span class="hero-eyebrow" id="hero-eyebrow-decrypt">PUBLIC REST API — FREE & OPEN</span>
+    <h1 class="hero-title" id="hero-title">REST API<br>yang kamu<br>butuhkan</h1>
+    <p class="hero-desc">
+      Kumpulan REST API gratis: video downloader, converter, dan utilitas lainnya.
+      Langsung pakai, tanpa biaya, tanpa ribet.
+    </p>
+    <div class="hero-actions">
+      <a href="#api-list" class="btn btn-primary">Lihat API &rarr;</a>
+      <button class="btn btn-ghost" onclick="openKeyDrawer()">API Key</button>
+    </div>
+  </div>
+
+  <!-- Lanyard-style card -->
+  <div class="hero-lanyard" id="hero-lanyard">
+    <div class="lanyard-rope"></div>
+    <div class="api-card-preview" id="api-card">
+      <div class="card-brand">
+        <div class="card-brand-mark">R</div>
+        <div>
+          <div class="card-brand-name">FamaApi</div>
+          <div class="card-brand-sub"></div>
+        </div>
+      </div>
+      <div class="card-pattern"></div>
+      <div class="card-user-name" id="card-display-name">YOUR NAME</div>
+      <div class="card-badge">DEVELOPER</div>
+    </div>
+
+    <!-- Controls (bottom right like in v0 IRL) -->
+    <div class="card-controls">
+      <div class="controls-inner">
+        <div class="controls-label">
+          <span>Personalize your card</span>
+          <div class="variant-swatches">
+            <div class="swatch dark active" id="swatch-dark" onclick="setVariant('dark')" title="Dark"></div>
+            <div class="swatch light" id="swatch-light" onclick="setVariant('light')" title="Light"></div>
+          </div>
+        </div>
+        <div class="controls-row">
+          <div class="name-wrap">
+            <input
+              class="name-input"
+              id="nameInput"
+              type="text"
+              placeholder="Enter your name"
+              maxlength="20"
+              oninput="updateCounter()"
+              onkeydown="if(event.key==='Enter') applyName()"
+            >
+            <span class="name-counter" id="nameCounter">0/20</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="applyName()" id="applyBtn" disabled>Apply</button>
+          <button class="btn btn-icon btn-outline" onclick="downloadCard()" title="Download">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPPORTED BY -->
+<div class="supporters-section">
+  <div class="supporters-inner">
+    <span class="supporters-label">Supported by</span>
+    <div class="supporters-logos">
+      <span class="supporter-logo">Vercel</span>
+      <span class="supporter-logo">Node.js</span>
+      <span class="supporter-logo">Express</span>
+      <span class="supporter-logo">Open Source</span>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section-wrap" style="padding-top:80px">
+  <h2 class="section-title">Semua yang kamu butuhkan<br>dalam satu API</h2>
+  <div class="features-grid">
+    <div class="feature-cell">
+      <div class="feature-icon-wrap">
+        <div class="feature-icon-box">📥</div>
+      </div>
+      <div class="feature-name">Video Downloader</div>
+      <p class="feature-desc">Download video dari YouTube, TikTok, Instagram, Facebook, dan Twitter/X.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-icon-wrap">
+        <div class="feature-icon-box">🎵</div>
+      </div>
+      <div class="feature-name">Audio Converter</div>
+      <p class="feature-desc">Convert video apapun ke format MP3 dengan kualitas tinggi, cepat dan mudah.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-icon-wrap">
+        <div class="feature-icon-box">⚡</div>
+      </div>
+      <div class="feature-name">Gratis Selamanya</div>
+      <p class="feature-desc">Semua endpoint bebas diakses, tanpa daftar, tanpa limit tersembunyi.</p>
+    </div>
+  </div>
+</div>
+
+<!-- API LIST -->
+<div class="section-wrap api-list-section" id="api-list">
+  <div class="api-list-grid">
+    <div>
+      <h2 class="api-list-title">API Endpoints</h2>
+      <p style="color:var(--fg-muted); font-size:14px; margin-bottom:40px;">Klik endpoint untuk expand dan coba langsung dari browser.</p>
+    </div>
+  </div>
+  <div id="api-items-container" class="api-items"></div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-box">
+    <h2 class="cta-title">Siap mulai build?</h2>
+    <p class="cta-desc">Semua API gratis dan bisa langsung dipakai. Tidak perlu registrasi.</p>
+    <div class="cta-actions">
+      <a href="#api-list" class="btn btn-primary">Coba API Sekarang</a>
+      <button class="btn btn-outline" onclick="checkPing()">Ping Server</button>
+    </div>
+    <div id="ping-toast" style="margin-top:16px; font-family:var(--mono); font-size:12px; color:var(--fg-muted); display:none;"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <span class="footer-logo">RestAPIdhan</span>
+    <div class="footer-links">
+      <a href="#api-list">API List</a>
+      <a href="#" onclick="openKeyDrawer()">API Key</a>
+      <a href="https://vercel.com" target="_blank">Vercel</a>
+    </div>
+    <div class="footer-copy">RestAPIdhan v1.0 &bull; Powered by Vercel &bull; Free &amp; Open</div>
+  </div>
+</footer>
+</main>
+
+<!-- API KEY DRAWER -->
+<div class="key-overlay" id="keyOverlay" onclick="closeKeyDrawer()"></div>
+<div class="key-drawer" id="keyDrawer">
+  <button class="drawer-close-btn" onclick="closeKeyDrawer()">&times;</button>
+  <h2 class="drawer-title">API Key</h2>
+  <p class="drawer-sub">Tersimpan lokal di browser. Dipakai otomatis untuk endpoint yang butuh autentikasi.</p>
+  <input class="key-field" type="password" id="apiKeyInput" placeholder="Masukkan API key...">
+  <div class="key-btns">
+    <button class="btn btn-primary btn-sm" onclick="saveKey()">Simpan</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearKey()">Hapus</button>
+  </div>
+  <div class="key-status">
+    <div class="key-dot off" id="keyDot"></div>
+    <span id="keyStatusText">Belum ada key tersimpan</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===========================
+   DITHER BACKGROUND (dot matrix like v0 IRL)
+   =========================== */
+(function() {
+  const canvas = document.getElementById('ditherCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    draw();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const spacing = 14;
+    const cols = Math.ceil(W / spacing);
+    const rows = Math.ceil(H / spacing);
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = c * spacing + spacing / 2;
+        const y = r * spacing + spacing / 2;
+        // Distance from top-right for density gradient
+        const dx = W - x;
+        const dy = y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxDist = Math.sqrt(W * W + H * H) * 0.6;
+        const prob = Math.pow(1 - Math.min(dist / maxDist, 1), 1.8);
+
+        if (Math.random() < prob * 0.9) {
+          const size = Math.random() < 0.15 ? 1.5 : 1;
+          const alpha = 0.12 + prob * 0.3;
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+})();
+
+/* ===========================
+   DECRYPT TEXT ANIMATION
+   =========================== */
+function decryptAnimate(el, text, speed = 55) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&—';
+  let revealed = 0;
+  const timer = setInterval(() => {
+    let out = '';
+    for (let i = 0; i < text.length; i++) {
+      if (i < revealed) out += text[i];
+      else if (text[i] === ' ') out += ' ';
+      else out += chars[Math.floor(Math.random() * chars.length)];
+    }
+    el.textContent = out;
+    revealed++;
+    if (revealed > text.length) clearInterval(timer);
+  }, speed);
+}
+
+setTimeout(() => {
+  decryptAnimate(document.getElementById('hero-eyebrow-decrypt'), 'PUBLIC REST API — FREE & OPEN');
+}, 300);
+
+/* ===========================
+   CARD VARIANT
+   =========================== */
+let cardVariant = 'dark';
+
+function setVariant(v) {
+  cardVariant = v;
+  document.getElementById('swatch-dark').classList.toggle('active', v === 'dark');
+  document.getElementById('swatch-light').classList.toggle('active', v === 'light');
+  const card = document.getElementById('api-card');
+  if (v === 'light') {
+    card.style.background = '#f5f5f5';
+    card.style.borderColor = 'rgba(0,0,0,0.15)';
+    card.querySelectorAll('.card-brand-name, .card-user-name').forEach(el => el.style.color = '#111');
+    card.querySelector('.card-brand-sub').style.color = 'rgba(0,0,0,0.4)';
+    card.querySelector('.card-badge').style.color = 'rgba(0,0,0,0.3)';
+    card.querySelector('.card-pattern').style.backgroundImage = 'radial-gradient(circle, rgba(0,0,0,0.2) 1px, transparent 1px)';
+    card.querySelector('.card-brand-mark').style.background = '#111';
+    card.querySelector('.card-brand-mark').style.color = 'white';
+  } else {
+    card.style.background = '#111';
+    card.style.borderColor = 'rgba(255,255,255,0.12)';
+    card.querySelectorAll('.card-brand-name, .card-user-name').forEach(el => el.style.color = 'white');
+    card.querySelector('.card-brand-sub').style.color = 'rgba(255,255,255,0.4)';
+    card.querySelector('.card-badge').style.color = 'rgba(255,255,255,0.4)';
+    card.querySelector('.card-pattern').style.backgroundImage = 'radial-gradient(circle, rgba(255,255,255,0.25) 1px, transparent 1px)';
+    card.querySelector('.card-brand-mark').style.background = 'white';
+    card.querySelector('.card-brand-mark').style.color = 'black';
+  }
+}
+
+/* ===========================
+   NAME INPUT
+   =========================== */
+function updateCounter() {
+  const inp = document.getElementById('nameInput');
+  const cnt = document.getElementById('nameCounter');
+  const applyBtn = document.getElementById('applyBtn');
+  cnt.textContent = inp.value.length + '/20';
+  applyBtn.disabled = false;
+}
+
+function applyName() {
+  const val = document.getElementById('nameInput').value.trim();
+  const display = document.getElementById('card-display-name');
+  display.textContent = val ? val.toUpperCase() : 'YOUR NAME';
+  document.getElementById('applyBtn').disabled = true;
+  showToast('Name applied!');
+}
+
+function downloadCard() {
+  const name = document.getElementById('card-display-name').textContent;
+  const canvas = document.createElement('canvas');
+  canvas.width = 600; canvas.height = 800;
+  const ctx = canvas.getContext('2d');
+  const isDark = cardVariant === 'dark';
+
+  // Background
+  ctx.fillStyle = isDark ? '#111' : '#f5f5f5';
+  ctx.roundRect(0, 0, 600, 800, 24);
+  ctx.fill();
+
+  // Header
+  ctx.fillStyle = isDark ? '#fff' : '#111';
+  ctx.font = 'bold 28px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('RestAPIdhan', 40, 70);
+
+  ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
+  ctx.font = '16px monospace';
+  ctx.fillText('api.restapidhan.my.id', 40, 96);
+
+  // Dot pattern
+  ctx.fillStyle = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  for (let x = 0; x < 600; x += 12) {
+    for (let y = 140; y < 360; y += 12) {
+      ctx.beginPath();
+      ctx.arc(x + 6, y + 6, 1.5, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // Name
+  ctx.fillStyle = isDark ? '#fff' : '#111';
+  ctx.font = 'bold 40px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(name, 40, 450);
+
+  // Badge
+  ctx.fillStyle = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
+  ctx.font = '14px monospace';
+  ctx.fillText('DEVELOPER', 40, 520);
+
+  const link = document.createElement('a');
+  link.download = `restapidhan-card-${name.toLowerCase().replace(/\s/g,'-')}.png`;
+  link.href = canvas.toDataURL('image/png', 1);
+  link.click();
+  showToast('Card downloaded!');
+}
+
+/* ===========================
+   API DATA
+   =========================== */
+const BASE = window.location.origin;
+
+const API_LIST = [
+  {
+    name: "Ping",
+    path: "/ping",
+    requireApiKey: false,
+    description: "Cek status dan health server backend.",
+    params: [],
+    example: "/ping"
+  },
+  {
+    name: "Video Downloader",
+    path: "/api/videodownloader",
+    requireApiKey: false,
+    description: "Download video dari YouTube, TikTok, Instagram, Facebook, Twitter/X.",
+    params: [
+      { key: "url", required: true, desc: "URL video yang ingin didownload" }
+    ],
+    example: "/api/videodownloader?url=https://youtu.be/xxxxxxx"
+  },
+  {
+    name: "To MP3",
+    path: "/api/tomp3",
+    requireApiKey: false,
+    description: "Convert video/link ke MP3 — YouTube, TikTok, Instagram, Facebook, Twitter/X, SoundCloud.",
+    params: [
+      { key: "url", required: true, desc: "URL video/audio yang ingin dikonversi" }
+    ],
+    example: "/api/tomp3?url=https://youtu.be/xxxxxxx"
+  },
+  {
+    name: "AM",
+    path: "/api/am",
+    requireApiKey: true,
+    description: "Fitur AM (send / verif / apply). Wajib menyertakan apikey yang valid.",
+    params: [
+      { key: "action", required: true, desc: "send | verif | apply" },
+      { key: "apikey", required: true, desc: "API key kamu" }
+    ],
+    example: "/api/am?action=send&apikey=xxxxxxxx&email=tes@gmail.com"
+  },
+  {
+    name: "List API",
+    path: "/api/list",
+    requireApiKey: false,
+    description: "Menampilkan seluruh daftar API yang terdaftar dalam format JSON.",
+    params: [],
+    example: "/api/list"
+  }
+];
+
+let savedKey = localStorage.getItem('restapidhan_apikey') || '';
+let openApiIdx = null;
+
+/* ===========================
+   RENDER API LIST
+   =========================== */
+function renderApiList() {
+  const container = document.getElementById('api-items-container');
+  container.innerHTML = API_LIST.map((api, idx) => {
+    const freeBadge = api.requireApiKey
+      ? '<span class="badge badge-orange">Key Required</span>'
+      : '<span class="badge badge-green">Free</span>';
+    const methodBadge = '<span class="badge badge-blue">GET</span>';
+
+    const paramRows = api.params.map(p =>
+      `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;">
+        <span style="font-family:var(--mono);color:#60a5fa;min-width:90px;">${p.key}${p.required ? '<span style="color:#f87171;">*</span>' : ''}</span>
+        <span style="color:var(--fg-muted);">${p.desc}</span>
+      </div>`
+    ).join('');
+
+    const inputs = api.params.map(p =>
+      `<input class="try-input" id="field-${idx}-${p.key}" placeholder="${p.key}${p.required?' (wajib)':''}">` 
+    ).join('');
+
+    return `<div class="api-item" id="api-item-${idx}">
+      <div onclick="toggleApi(${idx})" style="cursor:pointer;">
+        <div class="api-item-header">
+          ${methodBadge} ${freeBadge}
+          <span class="api-item-name">${api.name}</span>
+          <span class="api-item-path">${api.path}</span>
+        </div>
+        <p class="api-item-desc">${api.description}</p>
+      </div>
+      <div class="try-panel" id="try-panel-${idx}">
+        ${api.params.length ? `<div style="margin-bottom:14px;">${paramRows}</div>` : ''}
+        <div class="try-fields">
+          ${inputs}
+          <button class="btn btn-primary btn-sm" onclick="tryApi(${idx})">Send &rsaquo;</button>
+        </div>
+        <div class="try-result" id="try-result-${idx}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleApi(idx) {
+  if (openApiIdx === idx) {
+    document.getElementById('try-panel-' + idx).classList.remove('open');
+    openApiIdx = null;
+  } else {
+    if (openApiIdx !== null) {
+      document.getElementById('try-panel-' + openApiIdx).classList.remove('open');
+    }
+    document.getElementById('try-panel-' + idx).classList.add('open');
+    openApiIdx = idx;
+
+    // Autofill apikey fields
+    API_LIST[idx].params.forEach(p => {
+      if (p.key === 'apikey' && savedKey) {
+        document.getElementById(`field-${idx}-${p.key}`).value = savedKey;
+      }
+    });
+  }
+}
+
+async function tryApi(idx) {
+  const api = API_LIST[idx];
+  const qs = new URLSearchParams();
+  for (const p of api.params) {
+    const el = document.getElementById(`field-${idx}-${p.key}`);
+    let v = el ? el.value.trim() : '';
+    if (p.key === 'apikey' && !v && savedKey) v = savedKey;
+    if (p.required && !v) { showToast(`"${p.key}" wajib diisi!`); return; }
+    if (v) qs.set(p.key, v);
+  }
+  const resultEl = document.getElementById('try-result-' + idx);
+  resultEl.className = 'try-result show';
+  resultEl.textContent = 'Loading...';
+  const url = BASE + api.path + (qs.toString() ? '?' + qs : '');
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    resultEl.textContent = JSON.stringify(data, null, 2);
+    showToast(resp.ok ? 'Berhasil!' : 'Server error');
+  } catch(e) {
+    resultEl.textContent = 'Error: ' + e.message;
+    showToast('Gagal: ' + e.message);
+  }
+}
+
+/* ===========================
+   PING
+   =========================== */
+async function checkPing() {
+  const el = document.getElementById('ping-toast');
+  el.style.display = 'block';
+  el.textContent = 'Pinging server...';
+  try {
+    const r = await fetch(BASE + '/ping');
+    const d = await r.json();
+    el.textContent = '✓ Online — ' + JSON.stringify(d);
+    el.style.color = '#22c55e';
+  } catch(e) {
+    el.textContent = '✗ Offline — ' + e.message;
+    el.style.color = '#f87171';
+  }
+}
+
+/* ===========================
+   API KEY DRAWER
+   =========================== */
+function openKeyDrawer() {
+  document.getElementById('keyOverlay').classList.add('open');
+  document.getElementById('keyDrawer').classList.add('open');
+  updateKeyStatus();
+}
+function closeKeyDrawer() {
+  document.getElementById('keyOverlay').classList.remove('open');
+  document.getElementById('keyDrawer').classList.remove('open');
+}
+function saveKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k) { showToast('Isi API key dulu!'); return; }
+  savedKey = k;
+  localStorage.setItem('restapidhan_apikey', k);
+  document.getElementById('apiKeyInput').value = '';
+  updateKeyStatus();
+  showToast('API key tersimpan');
+}
+function clearKey() {
+  savedKey = '';
+  localStorage.removeItem('restapidhan_apikey');
+  document.getElementById('apiKeyInput').value = '';
+  updateKeyStatus();
+  showToast('API key dihapus');
+}
+function updateKeyStatus() {
+  const dot = document.getElementById('keyDot');
+  const txt = document.getElementById('keyStatusText');
+  if (savedKey) {
+    dot.className = 'key-dot on';
+    txt.textContent = 'Key tersimpan: ' + savedKey.slice(0,4) + '••••';
+    txt.style.color = '#22c55e';
+  } else {
+    dot.className = 'key-dot off';
+    txt.textContent = 'Belum ada key tersimpan';
+    txt.style.color = 'var(--fg-muted)';
+  }
+}
+
+/* ===========================
+   TOAST
+   =========================== */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ===========================
+   INIT
+   =========================== */
+renderApiList();
+updateKeyStatus();
+</script>
+</body>
+</html>
